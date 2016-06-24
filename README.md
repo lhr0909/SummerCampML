@@ -10,8 +10,6 @@
 
 ## Install GraphLab Create via pip
 
-[source for tutorial](https://dato.com/download/install-graphlab-create-command-line.html)
-
 Run the following command
 
     conda update pip
