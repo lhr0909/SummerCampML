@@ -25,7 +25,7 @@ class TextLoader():
         self.reset_batch_pointer()
 
     def preprocess(self, input_file, vocab_file, tensor_file):
-        with codecs.open(input_file, "r", encoding=self.encoding) as f:
+        with codecs.open(input_file, "r", encoding=self.encoding, errors='replace') as f:
             data = f.read()
         counter = collections.Counter(data)
         count_pairs = sorted(counter.items(), key=lambda x: -x[1])

@@ -9,6 +9,7 @@ from six.moves import cPickle
 
 from utils import TextLoader
 from lstm_gen import CharGen
+from model import Model
 
 def main():
     parser = argparse.ArgumentParser()
@@ -79,7 +80,7 @@ def train(args):
     with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'wb') as f:
         cPickle.dump((data_loader.chars, data_loader.vocab), f)
         
-    model = CharGen(args)
+    model = Model(args)
 
     with tf.Session() as sess:
         tf.initialize_all_variables().run()

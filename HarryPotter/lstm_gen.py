@@ -22,6 +22,7 @@ import os
 
 CharGenOpts = namedtuple('ReferitOpts', [
     'steps',
+    'model',
     'rnn_dim',
     'vocab',
     'layers'
@@ -32,11 +33,19 @@ CharGenOpts = namedtuple('ReferitOpts', [
 class CharGen(object):
     def __init__(self, opts, infer=False):
         self.opts = opts
+        pdb.set_trace()
         if infer:
-            opts.vocab = 1
+            opts.batch_size = 1
             opts.steps = 1
+        if opts.model == 'gru':
+            cell_fn = rnn_cell.GRUCell
+        elif opts.model == 'rnn':
+            cell_fn = rnn_cell.BasicRNNCell
+        elif opts.model == 'lstm':
+            cell_fn = rnn_cell.BasicLSTMCell
+        else:
+            raise Exception("Model type not supported: {}".format(opts.model))
 
-        cell_fn = rnn_cell.BasicLSTMCell
         cell = cell_fn(opts.rnn_dim)
 
         self.cell = cell = rnn_cell.MultiRNNCell([cell] * opts.layers)
@@ -47,9 +56,10 @@ class CharGen(object):
         with tf.variable_scope('rnnlm'):
             softmax_w = tf.get_variable("softmax_w", [opts.rnn_dim, opts.vocab])
             softmax_b = tf.get_variable("softmax_b", [opts.vocab])
-            embedding = tf.get_variable("embedding", [opts.vocab])
-            inputs = tf.split(1, opts.steps, tf.nn.embedding_lookup(embedding, self.input_data))
-            inputs = [tf.squeeze(input_i, [1]) for input_i in inputs]
+            with tf.device("/gpu:0"):
+                embedding = tf.get_variable("embedding", [opts.vocab, opts.rnn_dim])
+                inputs = tf.split(1, opts.steps, tf.nn.embedding_lookup(embedding, self.input_data))
+                inputs = [tf.squeeze(input_i, [1]) for input_i in inputs]
 
         def loop(prev, _):
             prev = tf.matmul(softmax_w, prev) + softmax_b
@@ -79,7 +89,7 @@ class CharGen(object):
     def sample(self, sess, chars, vocab, num=200, prime='The', sampling=1):
         state = self.cell.zero_state(1, tf.float32).eval()
         for char in prime[:-1]:
-            x = np.zeros(1, 1))
+            x = np.zeros(1, 1)
             x[0, 0] = vocab[char]
             feed = {self.input_data: x, self.init_state: state}
             [state] = sess.run([self.final_state], feed)
